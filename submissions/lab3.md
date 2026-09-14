@@ -19,7 +19,7 @@ Public key fingerprint: `SHA256:eF+DLv75…prfKkRryIMCSjeIk` (full value from `s
 
 ```
 commit b042b2e0a7084c90331676addeeb370244349635
-Good "git" signature for an.bugaev@innopolis.university with ED25519 key  eF+DLv75XHUOhb8msEzUOWu5W7QprfKkRryIMCSjeIk
+Good "git" signature for an.bugaev@innopolis.university with ED25519 key SHA256:eF+DLv75XHUOhb8msEzUOWu5W7QprfKkRryIMCSjeIk
 Author: Anton Bugaev <an.bugaev@innopolis.university>
 Date:   Mon Sep 14 18:01:00 2026 +0300
 
@@ -32,10 +32,10 @@ Date:   Mon Sep 14 18:01:00 2026 +0300
 
 Draft PR (Moodle): https://github.com/inno-devops-labs/DevSecOps-Intro/pull/1710
 
-- First signed commit: https://github.com/An11y/DevSecOps-Intro/commit/b042b2e0a7084c90331676addeeb370244349635
-- Tip commit on `feature/lab3`: https://github.com/An11y/DevSecOps-Intro/commit/851920ce91690d2306c2ac53c7f7df059e365b79
+- First signed commit (GitHub **Verified**): https://github.com/An11y/DevSecOps-Intro/commit/b042b2e0a7084c90331676addeeb370244349635
+- Tip commit on `feature/lab3` (GitHub **Verified**): https://github.com/An11y/DevSecOps-Intro/commit/646720da356b8c94a454537c1475a37434041d2d
 
-GitHub shows a green **Verified** badge once the same SSH public key is uploaded as a **Signing Key** (Settings → SSH and GPG keys). Locally `git log --show-signature` already reports a Good ED25519 signature for every commit on this branch.
+All commits on this PR show a green **Verified** badge (SSH signing key registered on the GitHub account). Locally `git log --show-signature -1` reports `Good "git" signature ... ED25519`.
 
 
 ### Repudiation (Lab 2 link)
