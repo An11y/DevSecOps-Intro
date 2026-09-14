@@ -1,5 +1,7 @@
 # Lab 2 — Anton Bugaev (CBS-03) — an.bugaev@innopolis.university
 
+**Deliverables in this PR:** Task 1 (baseline Threagile) · Task 2 (`threagile-model-secure.yaml`) · **Bonus Task** (`threagile-model-auth.yaml`, +2 pts)
+
 ## Task 1
 
 ### Severity table (baseline)
@@ -67,7 +69,18 @@ Total dropped by 5/23 ≈ 22% (roughly a fifth), not to zero.
 
 About four-fifths of the findings remain: application logic flaws (XSS), supply-chain/container risks, missing WAF/hardening, and architectural gaps like no identity store or vault. Closing those needs real controls — secure coding, dependency/base-image scanning, WAF, an IdP, and secret management — not just nicer YAML enums. One risk **no YAML edit can close** is **cross-site-scripting** in Juice Shop: it is intentional vulnerable-by-design behaviour in the application code, so changing protocol/encryption fields cannot eliminate it.
 
-## Bonus
+## Bonus Task — authentication flow model (+2 pts)
+
+Threagile run (auth model):
+
+```bash
+docker run --rm -v "$(pwd)/labs/lab2":/app/work \
+  threagile/threagile:0.9.1 \
+  -model /app/work/threagile-model-auth.yaml -output /app/work/output-auth
+jq 'length' labs/lab2/output-auth/risks.json
+# 26
+jq '[.[].severity] | group_by(.) | map({severity: .[0], count: length})' labs/lab2/output-auth/risks.json
+```
 
 ### Auth-model severity table
 
