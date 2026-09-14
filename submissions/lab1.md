@@ -84,19 +84,22 @@ Missing CSP and HSTS fall under OWASP Top 10:2025 **A02 Security Misconfiguratio
   - title follows `feat(labN): `
   - no secrets or large temp files committed
   - `submissions/labN.md` exists
-- Draft PR (auto-filled description from template sections): https://github.com/inno-devops-labs/DevSecOps-Intro/pull/1706
+- Draft PR to course repo (Moodle submission): https://github.com/inno-devops-labs/DevSecOps-Intro/pull/1706
+- Template auto-fill demo on fork (PR into own `main`, template from `.github/PULL_REQUEST_TEMPLATE.md`): https://github.com/An11y/DevSecOps-Intro/pull/1 — body uses the required **Goal / Changes / Testing / Artifacts & Screenshots** sections and checklist from the template file on branch `feature/lab1`.
+
+Note: a cross-fork PR into `inno-devops-labs/DevSecOps-Intro` does not pull the template from your fork’s default branch; the course repo has no student PR template. The fork PR above demonstrates auto-fill behaviour for grading Task 2.
 
 ## GitHub community
 
 Stars signal that a project is used and valued, which helps maintainers justify time, attract contributors, and make the work discoverable. Following classmates and staff keeps course updates and peer work in your feed so collaboration and review loops stay visible during the semester.
 
-Stars completed for `inno-devops-labs/DevSecOps-Intro` and `simple-container-com/api`. Follows for `@Cre-eD`, `@Naghme98`, `@pierrepicaud`, and classmates require the GitHub `user` OAuth scope (current token has `gist, read:org, repo, workflow` only); complete those follows in the GitHub UI if the API follow calls return 404.
+Completed: starred `inno-devops-labs/DevSecOps-Intro` and `simple-container-com/api`. Still to do manually in GitHub UI: follow [@Cre-eD](https://github.com/Cre-eD), [@Naghme98](https://github.com/Naghme98), [@pierrepicaud](https://github.com/pierrepicaud), and at least three classmates (e.g. from open course PRs).
 
 ## Bonus: CI smoke test
 
 - Workflow path: `.github/workflows/lab1-smoke.yml`
-- Run URL (green on fork PR exercising the same workflow): https://github.com/An11y/DevSecOps-Intro/actions/runs/34818903644
-- Course draft PR: https://github.com/inno-devops-labs/DevSecOps-Intro/pull/1706 (upstream first-time contributor check is `action_required` until maintainers approve; identical workflow is green on the fork)
+- Run URL (green `pull_request` run on fork PR #1): https://github.com/An11y/DevSecOps-Intro/actions/runs/34818903644
+- Course draft PR (for Moodle): https://github.com/inno-devops-labs/DevSecOps-Intro/pull/1706 — upstream Actions for first-time contributors stay `action_required` until staff approve; the same workflow file is green on the fork PR above.
 - Run duration: ~19s (queued at 07:39:56Z, completed ~07:40:15Z)
 - Curl output excerpt from the job log:
   ```
