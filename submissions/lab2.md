@@ -21,7 +21,7 @@
 | elevated | `unencrypted-communication` | `reverse-proxy` |
 | elevated | `missing-authentication` | `juice-shop` |
 | elevated | `cross-site-scripting` | `juice-shop` |
-| medium | `missing-identity-store` | `reverse-proxy` |
+| medium | `server-side-request-forgery` | `juice-shop` |
 
 ### STRIDE mapping
 
@@ -29,7 +29,7 @@
 2. **`unencrypted-communication` (reverse-proxy → juice-shop)** — **I (Information Disclosure)**. Internal hop still carries auth material; a compromised co-located process can sniff it.
 3. **`missing-authentication` (proxy → app)** — **S (Spoofing)**. Without authenticating the proxy-to-app link, an attacker can impersonate the reverse proxy toward Juice Shop.
 4. **`cross-site-scripting` (juice-shop)** — **T (Tampering)**. Stored/reflected XSS lets an attacker modify pages and execute script in victims’ browsers.
-5. **`missing-identity-store` (reverse-proxy)** — **S (Spoofing)**. Without a modeled identity provider/store, authentication strength and account lifecycle cannot be reasoned about or enforced consistently.
+5. **`server-side-request-forgery` (juice-shop)** — **T (Tampering)**. Juice Shop issues outbound HTTP(S) requests (e.g., webhook/profile URL flows); an attacker can trick the server into requesting internal or attacker-chosen targets.
 
 ### Trust-boundary crossing
 
@@ -61,7 +61,7 @@ Total dropped by 5/23 ≈ 22% (roughly a fifth), not to zero.
 ### Two rules that still fire (and why YAML edits could not remove them)
 
 1. **`cross-site-scripting` (elevated, juice-shop)** — Still the only elevated finding. Encryption and link authentication do not sanitize product reviews or other HTML sinks; XSS is a code/input-validation issue.
-2. **`missing-identity-store`** — Still present because hardening transport/storage does not introduce an IdP or credential directory asset; Threagile keeps flagging the absence of an identity store in the model.
+2. **`missing-identity-store` (medium, reverse-proxy)** — Still present because TLS and storage encryption do not add an identity provider/store asset to the model; Threagile continues to flag that architectural gap.
 
 ### What risk is left / what YAML cannot close
 
