@@ -1,4 +1,4 @@
-# Lab 2 — Anton Bugaev (CBS-03)
+# Lab 2 — Anton Bugaev (CBS-03) — an.bugaev@innopolis.university
 
 ## Task 1
 
