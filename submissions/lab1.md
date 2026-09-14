@@ -1,4 +1,4 @@
-# Lab 1 — Anton Bugaev (CBS-03)
+# Lab 1 — Anton Bugaev (CBS-03) — an.bugaev@innopolis.university
 
 ## Triage report
 
