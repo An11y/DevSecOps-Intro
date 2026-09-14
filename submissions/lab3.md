@@ -19,7 +19,7 @@ Public key fingerprint: `SHA256:eF+DLv75…prfKkRryIMCSjeIk` (full value from `s
 
 ```
 commit b042b2e0a7084c90331676addeeb370244349635
-Good "git" signature for an.bugaev@innopolis.university with ED25519 key SHA256:eF+DLv75XHUOhb8msEzUOWu5W7QprfKkRryIMCSjeIk
+Good "git" signature for an.bugaev@innopolis.university with ED25519 key SHA256:eF+DLv75…IMCSjeIk
 Author: Anton Bugaev <an.bugaev@innopolis.university>
 Date:   Mon Sep 14 18:01:00 2026 +0300
 
