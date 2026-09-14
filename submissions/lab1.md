@@ -84,7 +84,7 @@ Missing CSP and HSTS fall under OWASP Top 10:2025 **A02 Security Misconfiguratio
   - title follows `feat(labN): `
   - no secrets or large temp files committed
   - `submissions/labN.md` exists
-- Draft PR (auto-filled description): _will be updated after PR creation_
+- Draft PR (auto-filled description from template sections): https://github.com/inno-devops-labs/DevSecOps-Intro/pull/1706
 
 ## GitHub community
 
@@ -95,6 +95,11 @@ Stars completed for `inno-devops-labs/DevSecOps-Intro` and `simple-container-com
 ## Bonus: CI smoke test
 
 - Workflow path: `.github/workflows/lab1-smoke.yml`
-- Run URL: _will be updated after the draft PR Actions run_
-- Run duration: _pending_
-- Curl output excerpt: _pending_
+- Run URL (green on fork PR exercising the same workflow): https://github.com/An11y/DevSecOps-Intro/actions/runs/34818903644
+- Course draft PR: https://github.com/inno-devops-labs/DevSecOps-Intro/pull/1706 (upstream first-time contributor check is `action_required` until maintainers approve; identical workflow is green on the fork)
+- Run duration: ~19s (queued at 07:39:56Z, completed ~07:40:15Z)
+- Curl output excerpt from the job log:
+  ```
+  {"version":"20.0.0"}
+  Smoke OK after 3s
+  ```
