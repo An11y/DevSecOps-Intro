@@ -1,5 +1,7 @@
 # Lab 1 — Anton Bugaev (CBS-03) — an.bugaev@innopolis.university
 
+**Deliverables in this PR:** Task 1 (triage) · Task 2 (PR template) · Task 3 (GitHub community) · **Bonus Task** (`.github/workflows/lab1-smoke.yml`, +2 pts)
+
 ## Triage report
 
 ### Asset
@@ -98,7 +100,7 @@ Completed:
 - Following staff: [@Cre-eD](https://github.com/Cre-eD), [@Naghme98](https://github.com/Naghme98), [@pierrepicaud](https://github.com/pierrepicaud).
 - Following classmates: [@dilfd2006](https://github.com/dilfd2006), [@mobgun](https://github.com/mobgun), [@Mukhin-I](https://github.com/Mukhin-I).
 
-## Bonus: CI smoke test
+## Bonus Task — CI smoke test (+2 pts)
 
 - Workflow path: `.github/workflows/lab1-smoke.yml`
 - Run URL (green `pull_request` run on fork PR #1): https://github.com/An11y/DevSecOps-Intro/actions/runs/34818903644
