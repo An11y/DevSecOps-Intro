@@ -17,19 +17,19 @@
 
 | Severity | Rule ID | Asset |
 |----------|---------|-------|
+| elevated | `cross-site-scripting` | `juice-shop` |
 | elevated | `unencrypted-communication` | `user-browser` |
 | elevated | `unencrypted-communication` | `reverse-proxy` |
 | elevated | `missing-authentication` | `juice-shop` |
-| elevated | `cross-site-scripting` | `juice-shop` |
-| medium | `server-side-request-forgery` | `juice-shop` |
+| medium | `cross-site-request-forgery` | `juice-shop` |
 
 ### STRIDE mapping
 
-1. **`unencrypted-communication` (user-browser → juice-shop)** — **I (Information Disclosure)**. Cleartext HTTP can expose credentials, session IDs, and tokens to anyone on path.
-2. **`unencrypted-communication` (reverse-proxy → juice-shop)** — **I (Information Disclosure)**. Internal hop still carries auth material; a compromised co-located process can sniff it.
-3. **`missing-authentication` (proxy → app)** — **S (Spoofing)**. Without authenticating the proxy-to-app link, an attacker can impersonate the reverse proxy toward Juice Shop.
-4. **`cross-site-scripting` (juice-shop)** — **T (Tampering)**. Stored/reflected XSS lets an attacker modify pages and execute script in victims’ browsers.
-5. **`server-side-request-forgery` (juice-shop)** — **T (Tampering)**. Juice Shop issues outbound HTTP(S) requests (e.g., webhook/profile URL flows); an attacker can trick the server into requesting internal or attacker-chosen targets.
+1. **`cross-site-scripting` (juice-shop)** — **T (Tampering)**. Stored/reflected XSS lets an attacker modify pages and execute script in victims’ browsers.
+2. **`unencrypted-communication` (user-browser → juice-shop)** — **I (Information Disclosure)**. Cleartext HTTP can expose credentials, session IDs, and tokens to anyone on path.
+3. **`unencrypted-communication` (reverse-proxy → juice-shop)** — **I (Information Disclosure)**. Internal hop still carries auth material; a compromised co-located process can sniff it.
+4. **`missing-authentication` (proxy → app)** — **S (Spoofing)**. Without authenticating the proxy-to-app link, an attacker can impersonate the reverse proxy toward Juice Shop.
+5. **`cross-site-request-forgery` (juice-shop)** — **S (Spoofing)**. A victim’s browser can be tricked into sending authenticated requests the user did not intend, acting as the user toward the app.
 
 ### Trust-boundary crossing
 
