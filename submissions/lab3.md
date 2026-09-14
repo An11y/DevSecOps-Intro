@@ -30,9 +30,13 @@ Date:   Mon Sep 14 18:01:00 2026 +0300
 
 ### Verified badge
 
-Commit on GitHub (Verified after the SSH signing key is registered on the account): https://github.com/An11y/DevSecOps-Intro/commits/feature/lab3
+Draft PR (Moodle): https://github.com/inno-devops-labs/DevSecOps-Intro/pull/1710
 
-Direct commit (first signed): https://github.com/An11y/DevSecOps-Intro/commit/b042b2e0a7084c90331676addeeb370244349635
+- First signed commit: https://github.com/An11y/DevSecOps-Intro/commit/b042b2e0a7084c90331676addeeb370244349635
+- Tip commit on `feature/lab3`: https://github.com/An11y/DevSecOps-Intro/commit/851920ce91690d2306c2ac53c7f7df059e365b79
+
+GitHub shows a green **Verified** badge once the same SSH public key is uploaded as a **Signing Key** (Settings → SSH and GPG keys). Locally `git log --show-signature` already reports a Good ED25519 signature for every commit on this branch.
+
 
 ### Repudiation (Lab 2 link)
 
