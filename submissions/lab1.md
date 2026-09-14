@@ -93,7 +93,10 @@ Note: a cross-fork PR into `inno-devops-labs/DevSecOps-Intro` does not pull the 
 
 Stars signal that a project is used and valued, which helps maintainers justify time, attract contributors, and make the work discoverable. Following classmates and staff keeps course updates and peer work in your feed so collaboration and review loops stay visible during the semester.
 
-Completed: starred `inno-devops-labs/DevSecOps-Intro` and `simple-container-com/api`. Still to do manually in GitHub UI: follow [@Cre-eD](https://github.com/Cre-eD), [@Naghme98](https://github.com/Naghme98), [@pierrepicaud](https://github.com/pierrepicaud), and at least three classmates (e.g. from open course PRs).
+Completed:
+- Starred `inno-devops-labs/DevSecOps-Intro` and `simple-container-com/api`.
+- Following staff: [@Cre-eD](https://github.com/Cre-eD), [@Naghme98](https://github.com/Naghme98), [@pierrepicaud](https://github.com/pierrepicaud).
+- Following classmates: [@dilfd2006](https://github.com/dilfd2006), [@mobgun](https://github.com/mobgun), [@Mukhin-I](https://github.com/Mukhin-I).
 
 ## Bonus: CI smoke test
 
