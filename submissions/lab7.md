@@ -2,31 +2,46 @@
 
 **Deliverables:** Task 1 (Trivy image + Dockerfile) · Task 2 (PSS `restricted` + NetworkPolicy) · **Bonus Task** (`readOnlyRootFilesystem: true`, +2 pts)
 
+I scanned Juice Shop and the lab’s intentionally unsafe Dockerfile, then ran the same image under Pod Security `restricted` with a dedicated ServiceAccount, NetworkPolicy, digest pin, and a read-only root filesystem. Manifests: [`labs/lab7/k8s/`](../labs/lab7/k8s/). Raw scanner JSON and runtime evidence stay local in gitignored `labs/lab7/results/` (including `trivy-k8s.json` for Lab 10).
+
+## Environment and reproducibility
+
+| Item | Value |
+|------|-------|
+| Run date | 27 September 2026 |
+| Image | `bkimminich/juice-shop:v20.0.0` |
+| Digest (pinned) | `bkimminich/juice-shop@sha256:fd58bdc9745416afce8184ee0666278a436574633ea7880365153a63bfd418b0` |
+| Image `User` | `65532` (`docker inspect --format '{{.Config.User}}'`) |
+| Trivy | 0.74.0 |
+| k3d / kubectl | 5.8.3 / 1.34.1 |
+| Cluster | `k3d cluster create lab7 --image rancher/k3s:v1.33.0-k3s1` |
+
 ## Task 1
 
-### Severity counts and fix availability
+### Image vulnerabilities and fix availability
 
 ```bash
 trivy image bkimminich/juice-shop:v20.0.0 --severity HIGH,CRITICAL \
   --format json --output labs/lab7/results/trivy-image.json
 ```
 
-| Severity | Count |
-|----------|------:|
-| CRITICAL | 10 |
-| HIGH | 64 |
-| **Total (HIGH+CRITICAL)** | **74** |
+Counts are vulnerability/package matches from `.Results[].Vulnerabilities` (secrets excluded). A fix means nonempty `FixedVersion`.
 
-Of those **74** HIGH/CRITICAL findings, **71** list a `FixedVersion` and **3** do not. The no-fix rows are compensating-control territory, not a rebuild ticket for this sprint.
+| Severity | Matches | With listed fix | Without listed fix |
+|----------|--------:|----------------:|-------------------:|
+| CRITICAL | 10 | 8 | 2 |
+| HIGH | 64 | 63 | 1 |
+| **Total** | **74** | **71** | **3** |
 
-### Lab 4 Grype vs this Trivy image scan
+### Lab 4 Grype vs this Trivy scan
 
-| Tool / scope | CRITICAL | HIGH | HIGH+CRITICAL |
-|--------------|--------:|-----:|--------------:|
-| Lab 4 Grype (from CycloneDX SBOM) | 14 | 84 | **98** |
-| Lab 7 Trivy image (`HIGH,CRITICAL`) | 10 | 64 | **74** |
+| Comparable severity | Lab 4 Grype (from CycloneDX SBOM) | Lab 7 Trivy image |
+|---------------------|----------------------------------:|------------------:|
+| CRITICAL | 14 | 10 |
+| HIGH | 84 | 64 |
+| **HIGH + CRITICAL** | **98** | **74** |
 
-Grype was fed the Lab 4 SBOM and counted more HIGH/CRITICAL matches (98 vs 74). The scanners disagree on advisory sources, package identity, and severity mapping, and Grype’s SBOM path can surface findings Trivy’s image scanner groups or downgrades differently. Same image, different engines — the delta is expected, not a sign that either run was broken.
+Grype’s all-severity total was 182; that must not be compared to a HIGH/CRITICAL-only Trivy run. The 98-vs-74 gap reflects different inventory/matching engines, severity sources, and advisory aliases — not that the unchanged image became safer.
 
 ### Ten fixable findings (7.2)
 
@@ -43,34 +58,53 @@ HIGH	CVE-2026-14456	libssl3t64 3.5.5-1~deb13u2 -> 3.5.7-1~deb13u2
 HIGH	CVE-2026-45447	libssl3t64 3.5.5-1~deb13u2 -> 3.5.6-1~deb13u2
 ```
 
+Fix versions are per-advisory floors; e.g. `crypto-js` must satisfy both listed thresholds.
+
 ### Dockerfile findings (`trivy config`)
 
-Demo `Dockerfile`: `FROM node:latest` / `USER root` / `EXPOSE 22` / remote `ADD`.
+Demo file (literally named `Dockerfile`):
 
-| ID | Severity | What an attacker gains |
-|----|----------|------------------------|
-| `DS-0001` | MEDIUM | Untagged `node:latest` can silently change; you may pull a compromised or broken base without noticing. |
-| `DS-0002` | HIGH | Final `USER root` means a process breakout starts as root inside the container, which is the usual first step toward container escape / host impact. |
-| `DS-0004` | MEDIUM | Publishing SSH (22) expands the attack surface for remote login if something actually listens there. |
-| `DS-0026` | LOW | No `HEALTHCHECK` does not grant access by itself; it hides unhealthy instances so traffic keeps hitting a broken or partially compromised process. |
+```dockerfile
+FROM node:latest
+USER root
+EXPOSE 22
+ADD https://example.com/app.tar /
+```
 
-### No-fix vulnerabilities — what to tell a manager
+| ID | Severity | What an attacker / failure mode gains |
+|----|----------|----------------------------------------|
+| `DS-0001` | MEDIUM | Mutable `latest` base: rebuilds can silently pick a different or compromised upstream layer. |
+| `DS-0002` | HIGH | Final `USER root`: RCE inside the app starts as root in the container (wider filesystem + first step toward escape). |
+| `DS-0004` | MEDIUM | `EXPOSE 22` advertises SSH surface if something actually listens; `EXPOSE` alone does not start SSH. |
+| `DS-0026` | LOW | No `HEALTHCHECK`: unhealthy/compromised process can keep receiving traffic without a health signal. |
 
-A non-zero scanner total is normal when upstream has not shipped a patch yet. For those three HIGH/CRITICAL rows without a fix I would: (1) confirm exploitability in *our* runtime (is the package reachable?), (2) add compensating controls — network policy, least privilege, WAF/rate limits, monitoring — and (3) track the CVE until a fixed base or dependency lands, then rebuild. Telling a manager “the number is not zero because nobody patched upstream yet, and rebuilding cannot invent a fix that does not exist” is honest; promising zero findings without a rebuild pipeline and vendor patches is not.
+Four failures (1 HIGH, 2 MEDIUM, 1 LOW), as expected. This Trivy version **did not** emit a `DS-*` for the remote `ADD`; I am not inventing one. In a real build that download would still need integrity verification.
+
+### Findings with no fix — what I would tell a manager
+
+The three no-fix HIGH/CRITICAL matches are:
+
+| Severity | ID | Package |
+|----------|----|---------|
+| CRITICAL | `CVE-2026-53486` | `decompress@4.2.1` |
+| CRITICAL | `GHSA-5mrr-rgp6-x4gr` | `marsdb@0.6.11` |
+| HIGH | `CVE-2020-8203` | `lodash.set@4.3.2` |
+
+I would confirm reachability in our runtime, then remove/replace the dependency or constrain inputs that hit it. Meanwhile: least privilege, NetworkPolicy, read-only root, and monitoring limit blast radius but do not delete the vulnerable code. Each accepted exception needs an owner, justification, expiry, and a rescan date. To a manager: zero findings is not a reliable gate — the useful story is which risks remain reachable, which controls reduce them, and when remediation is reviewed. Waiting alone is not a plan.
 
 ## Task 2
 
-### Namespace labels and securityContext blocks
+### Namespace labels and securityContext
 
-Namespace `juice-shop` labels:
+[`namespace.yaml`](../labs/lab7/k8s/namespace.yaml) — all three modes `restricted`:
 
-```text
-pod-security.kubernetes.io/enforce=restricted
-pod-security.kubernetes.io/warn=restricted
-pod-security.kubernetes.io/audit=restricted
+```yaml
+pod-security.kubernetes.io/enforce: restricted
+pod-security.kubernetes.io/warn: restricted
+pod-security.kubernetes.io/audit: restricted
 ```
 
-Pod `securityContext`:
+Pod `securityContext` in [`deployment.yaml`](../labs/lab7/k8s/deployment.yaml):
 
 ```yaml
 runAsNonRoot: true
@@ -81,7 +115,7 @@ seccompProfile:
   type: RuntimeDefault
 ```
 
-Container `securityContext` (app):
+Container `securityContext` (app + init):
 
 ```yaml
 allowPrivilegeEscalation: false
@@ -90,71 +124,130 @@ capabilities:
   drop: ["ALL"]
 ```
 
-Dedicated ServiceAccount `juice-shop` with `automountServiceAccountToken: false` on both the ServiceAccount and the pod spec. Image pinned by digest:
+Dedicated [`serviceaccount.yaml`](../labs/lab7/k8s/serviceaccount.yaml) and the pod both set `automountServiceAccountToken: false`. Requests/limits are set for CPU and memory. Image pinned by digest (not tag).
 
-`bkimminich/juice-shop@sha256:fd58bdc9745416afce8184ee0666278a436574633ea7880365153a63bfd418b0`
+Apply namespace first (alphabetical `kubectl apply -f labs/lab7/k8s/` would otherwise hit the Deployment before the Namespace exists).
 
-(`docker inspect … --format '{{.Config.User}}'` → `65532`, matching `runAsUser`.)
+### Proof: Ready and UID 65532
 
-### Proof the pod runs as the image user
-
-```bash
-kubectl -n juice-shop wait --for=condition=ready pod -l app=juice-shop --timeout=180s
-# READY 1/1 Running, 0 restarts
-
-kubectl -n juice-shop get pod -l app=juice-shop \
-  -o jsonpath='runAsUser={.items[0].spec.securityContext.runAsUser}{"\n"}'
-# runAsUser=65532
+```text
+NAME                          READY   STATUS    RESTARTS
+juice-shop-5ccbb869b9-c5mlh   1/1     Running   0
 ```
 
-(The distroless-style image has no `id` binary; the admitted pod spec is the authoritative UID.)
+```bash
+kubectl -n juice-shop exec deploy/juice-shop -c juice-shop -- \
+  /nodejs/bin/node -e '…'   # see Bonus runtime JSON
+# uid=65532, gid=65532
+```
 
-### Trivy k8s: plain vs restricted
+Matches `docker inspect … '{{.Config.User}}'` → `65532`. (No `id` binary in this image.)
 
-| Namespace | Resource | Vulns C/H | Misconfig C/H |
-|-----------|----------|-----------|---------------|
-| `juice-plain` | Deployment/juice | 10 / 64 | 0 / **3** |
-| `juice-shop` | Deployment/juice-shop | 20 / 128 | 0 / **0** |
+### NetworkPolicy
 
-Misconfigurations drop from **3 HIGH** on the default Deployment to **0** once PSS `restricted` + explicit `securityContext` / SA / limits are in place — that is the hardening Trivy can see. Vulnerability counts look higher on `juice-shop` only because the Deployment has **two** containers (init + app) that each pull the **same** image, so Trivy tallies the image findings twice (10+64 → 20+128). Per-image the CRITICAL/HIGH set is unchanged; only a rebuild changes those.
+[`networkpolicy.yaml`](../labs/lab7/k8s/networkpolicy.yaml): `policyTypes` Ingress+Egress; ingress TCP 3000 only from pods labelled `access=juice-shop-client`; egress DNS (TCP/UDP 53) only to `kube-dns` in `kube-system`.
+
+| Probe | Result |
+|-------|--------|
+| Same-ns client with `access=juice-shop-client` | HTTP **200** |
+| Same-ns client without that label | connection failed (curl exit 7 / HTTP 000) |
+| App DNS lookup `kubernetes.default.svc.cluster.local` | `10.43.0.1` |
+| App TCP to plain Juice Shop pod :3000 | `ECONNREFUSED` (destination was healthy) |
+
+Port-forward uses the API/kubelet path and is **not** NetworkPolicy proof; the pod-to-pod probes are.
+
+### Trivy k8s: plain vs hardened
+
+```bash
+kubectl create ns juice-plain
+kubectl -n juice-plain create deployment juice --image=bkimminich/juice-shop:v20.0.0
+trivy k8s --include-namespaces juice-plain --severity HIGH,CRITICAL --report=summary
+trivy k8s --include-namespaces juice-shop  --severity HIGH,CRITICAL --report=summary
+trivy k8s --include-namespaces juice-shop --severity HIGH,CRITICAL \
+  --format json --output labs/lab7/results/trivy-k8s.json
+```
+
+**Raw summary rows** (bonus initContainer present on hardened Deployment):
+
+| Workload | Vulns C / H | Misconfig C / H |
+|----------|-------------|-----------------|
+| `juice-plain` / Deployment/juice | 10 / 64 | 0 / **3** |
+| `juice-shop` / Deployment/juice-shop | 20 / 128 | 0 / **0** |
+
+Raw vulns double on `juice-shop` because init + app both use the **same** image; Trivy tallies it twice. Counting the identical image once:
+
+| Same image, once | Plain | Hardened |
+|------------------|------:|---------:|
+| CRITICAL + HIGH vulns | **74** | **74** |
+| HIGH/CRITICAL misconfigs | **3** | **0** |
+
+Plain HIGH misconfigs: `KSV-0014` (root filesystem not read-only) and `KSV-0118` (default security context; appears twice in the plain object). Hardening clears the misconfig column; only a rebuild changes the package vulns. Misconfigurations differ; per-image vulnerability counts do not.
 
 ### What `restricted` blocked vs what I added voluntarily
 
-- **Blocked by the profile:** creating a pod with `allowPrivilegeEscalation: true` is rejected:
+Server-side dry-run with `allowPrivilegeEscalation: true` (otherwise valid non-root + seccomp + drop ALL):
 
 ```text
 pods "bad-priv" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "juice" must set securityContext.allowPrivilegeEscalation=false)
 ```
-- **Voluntary (profile does not require it):** `readOnlyRootFilesystem: true` (bonus), plus the NetworkPolicy default-deny with only client-labelled ingress on 3000 and DNS egress to `kube-dns`.
+
+**Voluntary (not required by `restricted`):** `readOnlyRootFilesystem: true` (bonus), and the NetworkPolicy default-deny with labelled ingress + DNS-only egress.
 
 ## Bonus
+
+### Baseline: read-only Docker crash
+
+```bash
+docker run --rm --read-only bkimminich/juice-shop:v20.0.0
+```
+
+Exits with `SQLITE_CANTOPEN: unable to open database file` — the app must write at runtime.
 
 ### `docker diff` (paths that matter)
 
 ```text
+C /juice-shop/data          (+ juiceshop.sqlite)
 C /juice-shop/logs          (+ access/audit logs)
-C /juice-shop/data           (+ juiceshop.sqlite)
-C /juice-shop/i18n           (+ locale JSON)
-C /juice-shop/frontend/dist/frontend  (assets / index touched)
-C /juice-shop/ftp            (+ legal.md)
-C /juice-shop/.well-known    (CSAF metadata)
+C /juice-shop/i18n          (+ locale JSON)
+C /juice-shop/ftp           (+ legal.md)
+C /juice-shop/frontend/dist/frontend  (index/assets touched)
+C /juice-shop/.well-known   (CSAF metadata)
 ```
 
-Also need writable `/tmp` for Node temp files.
+Plus `/tmp` for Node scratch (defensive; not always in the startup diff).
 
 ### Volume layout
 
-One `emptyDir` (`writable-paths`) with subPaths for `data`, `ftp`, `logs`, `i18n`, `frontend`, `wellknown`, and `tmp`. An initContainer from the **same digest** copies those directories from the image into the emptyDir (`fs.cpSync`), then the app mounts each subPath over the original path with `readOnlyRootFilesystem: true`.
+One `emptyDir` `writable-paths`, mounted as subPaths:
 
-### Directory that could not be a blank emptyDir
+| Mount | Subpath | Why writable |
+|-------|---------|--------------|
+| `/juice-shop/data` | `data` | SQLite + packaged seed files must stay visible |
+| `/juice-shop/logs` | `logs` | Access / audit logs |
+| `/juice-shop/ftp` | `ftp` | Generated `legal.md` beside shipped FTP files |
+| `/juice-shop/i18n` | `i18n` | Runtime locale generation |
+| `/juice-shop/frontend/dist/frontend` | `frontend` | Startup asset/index updates |
+| `/juice-shop/.well-known` | `wellknown` | CSAF provider metadata |
+| `/tmp` | `tmp` | Bounded temp space |
 
-`/juice-shop/ftp`, `/juice-shop/i18n`, `/juice-shop/frontend/dist/frontend`, and `.well-known` already ship files in the image. Mounting a fresh emptyDir there hides them and the process exits. Seeding via initContainer preserves the shipped content while still allowing writes on top.
+InitContainer (same digest, UID 65532, read-only root, drop ALL) seeds those directories with Node `fs.cpSync` into the emptyDir; the app mounts the seeded subpaths over the image paths.
 
-### Proof: Ready + HTTP 200
+### Directory that cannot be a blank emptyDir
 
-```text
-pod READY 1/1, readOnlyRootFilesystem=true, runAsUser=65532
-kubectl -n juice-shop port-forward deploy/juice-shop 13000:3000
+`/juice-shop/data` (and likewise `ftp`, `i18n`, frontend dist, `.well-known`) already contain files from the image. A fresh emptyDir hides them — e.g. missing `data/static/securityQuestions.yml` breaks startup. Seeding preserves packaged content while allowing writes. Final pod: `seedFile: true` for that path.
+
+### Runtime proof
+
+```json
+{"uid":65532,"gid":65532,"rootWrite":"EROFS","seedFile":true,"tokenMounted":false}
+```
+
+`rootWrite` = attempt to create `/juice-shop/readonly-proof` (EROFS confirms read-only root).
+
+```bash
+kubectl -n juice-shop port-forward deploy/juice-shop 13000:3000 --address 127.0.0.1
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:13000/
 # 200
 ```
+
+Pod Ready 1/1, zero restarts, `readOnlyRootFilesystem: true`. Cluster deleted after evidence: `k3d cluster delete lab7`.
