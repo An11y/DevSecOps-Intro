@@ -120,7 +120,11 @@ Misconfigurations drop from **3 HIGH** on the default Deployment to **0** once P
 
 ### What `restricted` blocked vs what I added voluntarily
 
-- **Blocked by the profile:** a server-side dry-run that sets `allowPrivilegeEscalation: true` is rejected by Pod Security Admission under `enforce=restricted` (privilege escalation must stay false / unset-as-false).
+- **Blocked by the profile:** creating a pod with `allowPrivilegeEscalation: true` is rejected:
+
+```text
+pods "bad-priv" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "juice" must set securityContext.allowPrivilegeEscalation=false)
+```
 - **Voluntary (profile does not require it):** `readOnlyRootFilesystem: true` (bonus), plus the NetworkPolicy default-deny with only client-labelled ingress on 3000 and DNS egress to `kube-dns`.
 
 ## Bonus
